@@ -4,6 +4,7 @@
 #include <string>
 
 #include <geometry_msgs/TransformStamped.h>
+#include <nav_msgs/Odometry.h>   //by XinZhao
 #include <tf/transform_listener.h>
 
 #include <voxblox/core/common.h>
@@ -25,6 +26,7 @@ class Transformer {
                        Transformation* transform);
 
   void transformCallback(const geometry_msgs::TransformStamped& transform_msg);
+  void transformCallback_nav(const nav_msgs::Odometry& transform_msg);   //by XinZhao
 
  private:
   bool lookupTransformTf(const std::string& from_frame,
@@ -74,9 +76,14 @@ class Transformer {
 
   // l Only used if use_tf_transforms_ set to false.
   ros::Subscriber transform_sub_;
+  ros::Subscriber transform_sub_nav;   //by XinZhao
 
   // l Transform queue, used only when use_tf_transforms is false.
   AlignedDeque<geometry_msgs::TransformStamped> transform_queue_;
+  AlignedDeque<nav_msgs::Odometry> transform_queue_nav;   //by XinZhao
+
+  int count=1;   // by XinZhao
+
 };
 
 }  // namespace voxblox

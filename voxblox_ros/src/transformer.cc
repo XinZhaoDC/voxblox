@@ -35,8 +35,10 @@ Transformer::Transformer(const ros::NodeHandle& nh,
   // C is the sensor frame that produces the depth data). It is possible to
   // specify T_C_D and set invert_static_tranform to true.
   if (!use_tf_transforms_) {
-    transform_sub_ =
-        nh_.subscribe("transform", 40, &Transformer::transformCallback, this);
+    //transform_sub_ =
+        //nh_.subscribe("transform", 40, &Transformer::transformCallback, this);   //by XinZhao
+    transform_sub_nav=
+            nh_.subscribe("/livox_odometry_mapped",40,&Transformer::transformCallback_nav, this);   //by XinZhao
     // Retrieve T_D_C from params.
     XmlRpc::XmlRpcValue T_B_D_xml;
     // TODO(helenol): split out into a function to avoid duplication.
@@ -69,6 +71,23 @@ Transformer::Transformer(const ros::NodeHandle& nh,
 void Transformer::transformCallback(
     const geometry_msgs::TransformStamped& transform_msg) {
   transform_queue_.push_back(transform_msg);
+}
+
+void Transformer::transformCallback_nav(const nav_msgs::Odometry& transform_msg) {   //by XinZhao
+    transform_queue_nav.push_back(transform_msg);
+    geometry_msgs::TransformStamped N2G_trans_transform_msg;
+    N2G_trans_transform_msg.header=transform_msg.header;
+    N2G_trans_transform_msg.child_frame_id=transform_msg.child_frame_id;
+    N2G_trans_transform_msg.transform.translation.x=transform_msg.pose.pose.position.x;
+    N2G_trans_transform_msg.transform.translation.y=transform_msg.pose.pose.position.y;
+    N2G_trans_transform_msg.transform.translation.z=transform_msg.pose.pose.position.z;
+    N2G_trans_transform_msg.transform.rotation.x=transform_msg.pose.pose.orientation.x;
+    N2G_trans_transform_msg.transform.rotation.y=transform_msg.pose.pose.orientation.y;
+    N2G_trans_transform_msg.transform.rotation.z=transform_msg.pose.pose.orientation.z;
+    N2G_trans_transform_msg.transform.rotation.w=transform_msg.pose.pose.orientation.w;
+
+    const geometry_msgs::TransformStamped temp_msg=N2G_trans_transform_msg;
+    transform_queue_.push_back(temp_msg);
 }
 
 bool Transformer::lookupTransform(const std::string& from_frame,
@@ -191,6 +210,16 @@ bool Transformer::lookupTransformQueue(const ros::Time& timestamp,
   // And also clear the queue up to this point. This leaves the current
   // message in place.
   transform_queue_.erase(transform_queue_.begin(), it);
+
+  //by XinZhao for demo presentation
+  if(false){
+      if(count%15!=0){
+          count++;
+          return false;
+      }
+      count++;
+  }
+
   return true;
 }
 

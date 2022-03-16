@@ -146,6 +146,10 @@ class TsdfServer {
   /// Publish the complete map for other nodes to consume.
   ros::Publisher tsdf_map_pub_;
 
+  /// by XinZhao:for demo presentation
+  ros::Publisher pub_pointcloud_demo;
+  int count=1;
+
   /// Subscriber to subscribe to another node generating the map.
   ros::Subscriber tsdf_map_sub_;
 

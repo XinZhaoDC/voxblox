@@ -3,8 +3,13 @@
 #include <minkindr_conversions/kindr_msg.h>
 #include <minkindr_conversions/kindr_tf.h>
 
+
 #include "voxblox_ros/conversions.h"
 #include "voxblox_ros/ros_params.h"
+
+//#include <iostream>
+//#include <string>
+//using namespace std;
 
 namespace voxblox {
 
@@ -38,7 +43,13 @@ TsdfServer::TsdfServer(const ros::NodeHandle& nh,
       accumulate_icp_corrections_(true),
       pointcloud_queue_size_(1),
       num_subscribers_tsdf_map_(0),
+      count(1),   /// by XinZhao:for demo representation
       transformer_(nh, nh_private) {
+
+    //std::cout<<1<<std::endl;
+    //std::cout<<nh<<std::endl;
+    //std::cout<<nh_private<<std::endl;
+
   getServerConfigFromRosParam(nh_private);
 
   // Advertise topics.
@@ -60,6 +71,10 @@ TsdfServer::TsdfServer(const ros::NodeHandle& nh,
                                   &TsdfServer::insertPointcloud, this);
 
   mesh_pub_ = nh_private_.advertise<voxblox_msgs::Mesh>("mesh", 1, true);
+
+
+  /// by XinZhao:for demo representation
+  pub_pointcloud_demo=nh_private_.advertise<sensor_msgs::PointCloud2>("demo",50);
 
   // Publishing/subscribing to a layer from another node (when using this as
   // a library, for example within a planner).
@@ -251,7 +266,7 @@ void TsdfServer::processPointCloudMessageAndInsert(
   ptcloud_timer.Stop();
 
   Transformation T_G_C_refined = T_G_C;
-  if (enable_icp_) {
+  if (enable_icp_) {                             //To be continued
     timing::Timer icp_timer("icp");
     if (!accumulate_icp_corrections_) {
       icp_corrected_transform_.setIdentity();
@@ -357,13 +372,25 @@ void TsdfServer::insertPointcloud(
     last_msg_time_ptcloud_ = pointcloud_msg_in->header.stamp;
     // So we have to process the queue anyway... Push this back.
     pointcloud_queue_.push(pointcloud_msg_in);
+    ROS_INFO("Size:%d",pointcloud_queue_.size());   //by XinZhao
   }
 
   Transformation T_G_C;
   sensor_msgs::PointCloud2::Ptr pointcloud_msg;
+
+  sensor_msgs::PointCloud2 pub_pointcloud_msg;
   bool processed_any = false;
   while (
       getNextPointcloudFromQueue(&pointcloud_queue_, &pointcloud_msg, &T_G_C)) {
+
+      //by XinZhao: for demo representation
+      //if(true){
+         // if(count%20==0){
+         //     pub_pointcloud_msg.data=(*pointcloud_msg).data;
+         //    sensor_msgs::convert
+         // }
+      //}
+
     constexpr bool is_freespace_pointcloud = false;
     processPointCloudMessageAndInsert(pointcloud_msg, T_G_C,
                                       is_freespace_pointcloud);
@@ -382,6 +409,7 @@ void TsdfServer::insertPointcloud(
     ROS_INFO_STREAM("Timings: " << std::endl << timing::Timing::Print());
     ROS_INFO_STREAM(
         "Layer memory: " << tsdf_map_->getTsdfLayer().getMemorySize());
+    //ROS_INFO("===============================================================");   //by XinZhao
   }
 }
 
@@ -587,6 +615,7 @@ bool TsdfServer::clearMapCallback(std_srvs::Empty::Request& /*request*/,
 bool TsdfServer::generateMeshCallback(std_srvs::Empty::Request& /*request*/,
                                       std_srvs::Empty::Response&
                                       /*response*/) {  // NOLINT
+   // ROS_INFO("-----------------------test--------------------------------");   by Xinzhao
   return generateMesh();
 }
 
